@@ -12,7 +12,7 @@ const Layout = () => {
 
             <div className="flex-1 md:ml-64 flex flex-col min-w-0 transition-all duration-300">
                 <Header onMenuClick={() => setIsSidebarOpen(true)} />
-                <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+                <main className="flex-1 p-4 md:p-8 overflow-y-auto overflow-x-hidden">
                     <div className="max-w-[1600px] mx-auto w-full">
                         <Outlet />
                     </div>
