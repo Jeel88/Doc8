@@ -4,8 +4,9 @@ import Layout from './layout/Layout';
 import Home from './pages/Home';
 import Upload from './pages/Upload';
 import Browse from './pages/Browse';
-import Community from './pages/Community';
 import Settings from './pages/Settings';
+import Notices from './pages/Notices';
+import AiSummary from './pages/AiSummary';
 
 function App() {
   return (
@@ -15,7 +16,8 @@ function App() {
           <Route index element={<Home />} />
           <Route path="upload" element={<Upload />} />
           <Route path="browse" element={<Browse />} />
-          <Route path="community" element={<Community />} />
+          <Route path="notices" element={<Notices />} />
+          <Route path="ai-summary" element={<AiSummary />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

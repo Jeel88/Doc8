@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { GraduationCap, Book, Laptop, Rocket, FileText, ChevronRight, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { GraduationCap, Book, Laptop, Rocket, FileText, ChevronRight, ArrowLeft, Upload, Trash2, Plus } from 'lucide-react';
 // Subject Icons
 import { Code, Calculator, Atom, Globe, Briefcase, Music, Palette } from 'lucide-react';
 
@@ -10,15 +11,15 @@ const yearData = [
     { id: '4th Year', label: 'Final Year', semesters: ['Sem 7', 'Sem 8'], icon: Rocket, gradient: 'from-orange-400 to-red-500' },
 ];
 
-const subjects = [
-    { name: 'Computer Science', icon: Code, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { name: 'Mathematics', icon: Calculator, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { name: 'Physics', icon: Atom, color: 'text-violet-500', bg: 'bg-violet-500/10' },
-    { name: 'Literature', icon: Book, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-    { name: 'History', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { name: 'Business', icon: Briefcase, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-    { name: 'Arts', icon: Palette, color: 'text-red-500', bg: 'bg-red-500/10' },
-    { name: 'Music', icon: Music, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
+const initialSubjects = [
+    { id: 'cs', name: 'Computer Science', icon: Code, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { id: 'math', name: 'Mathematics', icon: Calculator, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { id: 'phy', name: 'Physics', icon: Atom, color: 'text-violet-500', bg: 'bg-violet-500/10' },
+    { id: 'lit', name: 'Literature', icon: Book, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+    { id: 'hist', name: 'History', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { id: 'bus', name: 'Business', icon: Briefcase, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+    { id: 'arts', name: 'Arts', icon: Palette, color: 'text-red-500', bg: 'bg-red-500/10' },
+    { id: 'mus', name: 'Music', icon: Music, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
 ];
 
 const mockNotes = [
@@ -29,26 +30,53 @@ const mockNotes = [
 ];
 
 const Browse = () => {
+    const location = useLocation();
     const [selectedYear, setSelectedYear] = useState(null);
     const [selectedSemester, setSelectedSemester] = useState(null);
     const [selectedSubject, setSelectedSubject] = useState(null);
+    const [subjectList, setSubjectList] = useState(initialSubjects);
+
+    // Upload & Notes State
+    const [notesList, setNotesList] = useState(mockNotes);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [newNote, setNewNote] = useState({ title: '', author: '' });
+
+    const handleUploadSubmit = (e) => {
+        e.preventDefault();
+        const noteToAdd = {
+            id: Date.now(),
+            title: newNote.title,
+            author: newNote.author,
+            size: '1.2 MB', // Mock size
+            time: 'Just now',
+            subjectId: selectedSubject.id
+        };
+        setNotesList([noteToAdd, ...notesList]);
+        setNewNote({ title: '', author: '' });
+        setIsUploadModalOpen(false);
+    };
+
+    // Handle Redirection from Home
+    useEffect(() => {
+        if (location.state?.selectedYearId && !selectedYear) {
+            const yearToSelect = yearData.find(y => y.id === location.state.selectedYearId);
+            if (yearToSelect) {
+                setSelectedYear(yearToSelect);
+                setSelectedSemester(yearToSelect.semesters[0]);
+            }
+        }
+    }, [location.state]); // Only run when location state changes
 
     const handleYearClick = (year) => {
         if (selectedYear?.id === year.id) {
-            // Unclick: Reset everything
             setSelectedYear(null);
             setSelectedSemester(null);
             setSelectedSubject(null);
         } else {
-            // Click: Select year, default to first semester
             setSelectedYear(year);
             setSelectedSemester(year.semesters[0]);
             setSelectedSubject(null);
         }
-    };
-
-    const handleSubjectClick = (subject) => {
-        setSelectedSubject(subject);
     };
 
     return (
@@ -62,7 +90,6 @@ const Browse = () => {
             <section>
                 <div className={`grid gap-4 transition-all duration-500 ${selectedYear ? 'grid-cols-1 max-w-xl mx-auto' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
                     {yearData.map((year) => {
-                        // If a year is selected, hide the others
                         if (selectedYear && selectedYear.id !== year.id) return null;
 
                         return (
@@ -97,7 +124,7 @@ const Browse = () => {
                 </div>
             </section>
 
-            {/* Drill Down Content (Only visible if Year is selected) */}
+            {/* Drill Down Content */}
             {selectedYear && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
 
@@ -109,7 +136,7 @@ const Browse = () => {
                                     key={sem}
                                     onClick={() => {
                                         setSelectedSemester(sem);
-                                        setSelectedSubject(null); // Reset subject on sem change
+                                        setSelectedSubject(null);
                                     }}
                                     className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${selectedSemester === sem
                                             ? 'bg-zinc-800 text-white shadow-sm'
@@ -122,64 +149,141 @@ const Browse = () => {
                         </div>
                     </div>
 
-                    {/* Subject Selection Grid (Hidden if Subject is Selected) */}
+                    {/* Subject Selection Grid */}
                     {!selectedSubject && (
                         <section>
-                            <h3 className="text-lg font-semibold text-white mb-4 text-center">Select Subject</h3>
+                            <h3 className="text-lg font-semibold text-white mb-4 text-center">Select Subject for {selectedSemester}</h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {subjects.map((subject) => (
-                                    <button
-                                        key={subject.name}
-                                        onClick={() => handleSubjectClick(subject)}
-                                        className="bg-card border border-zinc-800 rounded-xl p-4 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all text-left group"
+                                {subjectList.map((subject) => (
+                                    <div
+                                        key={subject.id}
+                                        onClick={() => setSelectedSubject(subject)}
+                                        className="relative bg-card border border-zinc-800 rounded-xl p-4 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all text-left group cursor-pointer"
                                     >
                                         <div className={`w-10 h-10 rounded-lg ${subject.bg} ${subject.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                                             <subject.icon size={20} />
                                         </div>
                                         <h4 className="font-semibold text-white">{subject.name}</h4>
                                         <p className="text-xs text-muted">12 Notes</p>
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Notes List (Only visible if Subject is Selected) */}
-                    {selectedSubject && (
-                        <section className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                            <div className="flex items-center gap-3 mb-6">
-                                <button
-                                    onClick={() => setSelectedSubject(null)}
-                                    className="p-2 hover:bg-zinc-800 rounded-full transition-colors text-muted hover:text-white"
-                                >
-                                    <ArrowLeft size={20} />
-                                </button>
-                                <div>
-                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        {selectedSubject.name} <span className="text-zinc-600">/</span> {selectedSemester}
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {mockNotes.map((note) => (
-                                    <div key={note.id} className="bg-card border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all group flex items-start gap-4">
-                                        <div className="p-3 bg-zinc-900 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
-                                            <FileText size={24} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold text-white text-lg truncate group-hover:text-primary transition-colors">{note.title}</h4>
-                                            <p className="text-sm text-muted mb-3">{note.author}</p>
-                                            <div className="flex items-center gap-3 text-xs text-muted">
-                                                <span className="bg-zinc-800 px-2 py-1 rounded text-zinc-300">{note.size}</span>
-                                                <span>• 2 days ago</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 ))}
+
+                                {/* Add Subject Placeholder */}
+                                <button className="bg-dashed border-2 border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 gap-2 transition-all">
+                                    <Plus size={24} />
+                                    <span className="text-sm font-medium">Add Subject</span>
+                                </button>
                             </div>
                         </section>
                     )}
+
+                    {/* Notes List */}
+                    {selectedSubject && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setSelectedSubject(null)}
+                                        className="p-2 hover:bg-zinc-800 rounded-full transition-colors text-muted hover:text-white"
+                                    >
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                            {selectedSubject.name} <span className="text-zinc-600">/</span> {selectedSemester}
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => setIsUploadModalOpen(true)}
+                                    className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+                                >
+                                    <Upload size={16} />
+                                    Upload Note
+                                </button>
+                            </div>
+
+                            {/* Notes Grid */}
+                            {notesList.filter(n => n.subjectId === selectedSubject.id || !n.subjectId).length === 0 ? (
+                                <div className="text-center py-12 text-muted">
+                                    <FileText size={48} className="mx-auto mb-4 opacity-20" />
+                                    <p>No notes uploaded for this subject yet.</p>
+                                    <button onClick={() => setIsUploadModalOpen(true)} className="text-primary hover:underline mt-2">Be the first to upload!</button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {notesList.filter(n => n.subjectId === selectedSubject.id || !n.subjectId).map((note) => (
+                                        <div key={note.id} className="bg-card border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all group flex items-start gap-4">
+                                            <div className="p-3 bg-zinc-900 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
+                                                <FileText size={24} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-semibold text-white text-lg truncate group-hover:text-primary transition-colors">{note.title}</h4>
+                                                <p className="text-sm text-muted mb-3">{note.author}</p>
+                                                <div className="flex items-center gap-3 text-xs text-muted">
+                                                    <span className="bg-zinc-800 px-2 py-1 rounded text-zinc-300">{note.size}</span>
+                                                    <span>• {note.time || 'Just now'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    )}
+                </div>
+            )}
+
+            {/* Upload Modal */}
+            {isUploadModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-card border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-white">Upload Note</h2>
+                            <button onClick={() => setIsUploadModalOpen(false)} className="text-zinc-500 hover:text-white">
+                                <Plus size={24} className="rotate-45" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUploadSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-1">Title</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="e.g. Calculus Chapter 1"
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    value={newNote.title}
+                                    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-1">Author</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Your Name or Professor"
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    value={newNote.author}
+                                    onChange={(e) => setNewNote({ ...newNote, author: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="border-2 border-dashed border-zinc-800 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-zinc-900/50 hover:border-zinc-600 transition-all">
+                                <Upload size={24} className="text-zinc-500 mb-2" />
+                                <p className="text-sm text-zinc-400">Click to attach PDF or Doc</p>
+                                <p className="text-xs text-zinc-600 mt-1">(Simulation only)</p>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all mt-4"
+                            >
+                                Upload Note
+                            </button>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

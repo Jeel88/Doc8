@@ -34,11 +34,21 @@ const years = [
 
 import { Link } from 'react-router-dom';
 
+import { useNavigate } from 'react-router-dom';
+
 const SemesterGrid = () => {
+    const navigate = useNavigate();
+
+    const handleYearClick = (yearLabel) => {
+        // Map label "1st Year" to ID expected by Browse page if needed, or pass label directly
+        // Browse page expects ID like '1st Year'
+        navigate('/browse', { state: { selectedYearId: yearLabel } });
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <div>
+                <div> {/* ... Header ... */}
                     <h2 className="text-2xl font-bold">
                         Browse by <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-pink-400">Year & Semester</span>
                     </h2>
@@ -51,9 +61,14 @@ const SemesterGrid = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {years.map((year) => (
-                    <div key={year.id} className="group relative overflow-hidden rounded-2xl bg-card border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer">
+                    <div
+                        key={year.id}
+                        onClick={() => handleYearClick(year.label)}
+                        className="group relative overflow-hidden rounded-2xl bg-card border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer"
+                    >
                         <div className={`absolute inset-0 bg-gradient-to-br ${year.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                         <div className="p-6">
+                            {/* ... Content ... */}
                             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${year.gradient} flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                                 <year.icon size={24} />
                             </div>

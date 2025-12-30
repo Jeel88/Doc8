@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Upload, Compass, Settings, BookOpen, Users, X } from 'lucide-react';
+import { Home, Upload, Compass, Settings, Bell, Sparkles, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 
@@ -8,9 +8,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     const navItems = [
         { icon: Home, label: 'Home', path: '/' },
-        { icon: Upload, label: 'Upload Notes', path: '/upload' },
         { icon: Compass, label: 'Browse', path: '/browse' },
-        { icon: Users, label: 'Community', path: '/community' },
+        { icon: Bell, label: 'Notices', path: '/notices' },
+        { icon: Sparkles, label: 'AI Summarizer', path: '/ai-summary' },
         { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 
@@ -41,8 +41,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 to={item.path}
                                 onClick={onClose} // Close on click mobile
                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
-                                        ? 'bg-violet-600/10 text-primary' /* Active state */
-                                        : 'text-muted hover:bg-zinc-800 hover:text-white'
+                                    ? 'bg-violet-600/10 text-primary' /* Active state */
+                                    : 'text-muted hover:bg-zinc-800 hover:text-white'
                                     }`}
                             >
                                 <item.icon size={20} />
@@ -51,16 +51,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                         );
                     })}
                 </nav>
-
-                <div className="mt-auto pt-6 border-t border-zinc-800">
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-violet-900/50 to-purple-900/20 border border-violet-500/20">
-                        <p className="text-sm font-semibold text-white mb-1">Premium Plan</p>
-                        <p className="text-xs text-muted mb-3">Get unlimited AI summaries</p>
-                        <button className="w-full py-2 text-xs font-semibold bg-primary text-white rounded-lg hover:brightness-110 transition-all">
-                            Upgrade Now
-                        </button>
-                    </div>
-                </div>
             </aside>
         </>
     );
