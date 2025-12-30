@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
 
 const Header = ({ onMenuClick }) => {
@@ -65,12 +66,13 @@ const Header = ({ onMenuClick }) => {
                                     <p className="text-sm font-medium text-white">John Doe</p>
                                     <p className="text-xs text-muted">john.doe@edu.com</p>
                                 </div>
-                                <button className="w-full text-left px-4 py-2 text-sm text-muted hover:text-white hover:bg-zinc-800 transition-colors">
-                                    Profile
-                                </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-muted hover:text-white hover:bg-zinc-800 transition-colors">
+                                <Link
+                                    to="/settings"
+                                    onClick={() => setIsProfileOpen(false)}
+                                    className="block w-full text-left px-4 py-2 text-sm text-muted hover:text-white hover:bg-zinc-800 transition-colors"
+                                >
                                     Settings
-                                </button>
+                                </Link>
                                 <div className="h-px bg-zinc-800 my-1"></div>
                                 <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                                     Log Out

@@ -32,6 +32,8 @@ const years = [
     },
 ];
 
+import { Link } from 'react-router-dom';
+
 const SemesterGrid = () => {
     return (
         <div className="space-y-6">
@@ -42,9 +44,9 @@ const SemesterGrid = () => {
                     </h2>
                     <p className="text-muted text-sm mt-1">Find notes organized for easy access</p>
                 </div>
-                <button className="text-sm text-primary hover:text-white transition-colors flex items-center gap-1">
+                <Link to="/browse" className="text-sm text-primary hover:text-white transition-colors flex items-center gap-1">
                     View All <ChevronRight size={16} />
-                </button>
+                </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
