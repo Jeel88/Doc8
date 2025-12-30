@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
 import Logo from './Logo';
 
 const Header = ({ onMenuClick }) => {
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+
     return (
         <header className="h-16 flex items-center justify-between px-4 md:px-8 border-b border-zinc-800 bg-bg-dark/50 backdrop-blur-md sticky top-0 z-40">
             <div className="flex items-center gap-4 flex-1">
@@ -40,15 +42,43 @@ const Header = ({ onMenuClick }) => {
 
                 <div className="w-px h-6 bg-zinc-800 mx-2 hidden sm:block"></div>
 
-                <button className="flex items-center gap-3 hover:bg-zinc-800/50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-zinc-800">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs ring-2 ring-zinc-900">
-                        JD
-                    </div>
-                    <div className="hidden md:block text-left">
-                        <p className="text-sm font-medium text-white leading-none">John Doe</p>
-                        <p className="text-[10px] text-muted mt-0.5">Student</p>
-                    </div>
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className="flex items-center gap-3 hover:bg-zinc-800/50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-zinc-800 focus:outline-none"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs ring-2 ring-zinc-900">
+                            JD
+                        </div>
+                        <div className="hidden md:block text-left">
+                            <p className="text-sm font-medium text-white leading-none">John Doe</p>
+                            <p className="text-xs text-muted mt-0.5">Student</p>
+                        </div>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isProfileOpen && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)}></div>
+                            <div className="absolute right-0 mt-2 w-48 bg-card border border-zinc-800 rounded-xl shadow-xl z-50 py-1 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                                <div className="px-4 py-2 border-b border-zinc-800 mb-1">
+                                    <p className="text-sm font-medium text-white">John Doe</p>
+                                    <p className="text-xs text-muted">john.doe@edu.com</p>
+                                </div>
+                                <button className="w-full text-left px-4 py-2 text-sm text-muted hover:text-white hover:bg-zinc-800 transition-colors">
+                                    Profile
+                                </button>
+                                <button className="w-full text-left px-4 py-2 text-sm text-muted hover:text-white hover:bg-zinc-800 transition-colors">
+                                    Settings
+                                </button>
+                                <div className="h-px bg-zinc-800 my-1"></div>
+                                <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                                    Log Out
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </header>
     );

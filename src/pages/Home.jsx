@@ -26,9 +26,6 @@ const Home = () => {
                                 <UploadCloud size={24} />
                                 Upload Notes
                             </button>
-                            <button className="w-full sm:w-auto px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold text-lg transition-all border border-zinc-700">
-                                Explore
-                            </button>
                         </div>
                     </div>
 
