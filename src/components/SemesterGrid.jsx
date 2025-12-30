@@ -7,21 +7,21 @@ const years = [
         label: '1st Year',
         semesters: 'Sem 1 - 2',
         icon: GraduationCap,
-        gradient: 'from-violet-500 to-fuchsia-500',
+        gradient: 'from-blue-500 to-cyan-500',
     },
     {
         id: 2,
         label: '2nd Year',
         semesters: 'Sem 3 - 4',
         icon: Book,
-        gradient: 'from-cyan-500 to-blue-500',
+        gradient: 'from-cyan-500 to-teal-500',
     },
     {
         id: 3,
         label: '3rd Year',
         semesters: 'Sem 5 - 6',
         icon: Laptop,
-        gradient: 'from-emerald-400 to-teal-500',
+        gradient: 'from-emerald-400 to-green-500',
     },
     {
         id: 4,
@@ -50,7 +50,7 @@ const SemesterGrid = () => {
             <div className="flex items-center justify-between">
                 <div> {/* ... Header ... */}
                     <h2 className="text-2xl font-bold">
-                        Browse by <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-pink-400">Year & Semester</span>
+                        Browse by <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Year & Semester</span>
                     </h2>
                     <p className="text-muted text-sm mt-1">Find notes organized for easy access</p>
                 </div>

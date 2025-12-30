@@ -30,7 +30,7 @@ const NoticeBoard = () => {
                 let bg = 'bg-cyan-500/10';
 
                 if (n.type === 'Exam') { icon = FileText; color = 'text-pink-500'; bg = 'bg-pink-500/10'; }
-                if (n.type === 'Event') { icon = Star; color = 'text-violet-500'; bg = 'bg-violet-500/10'; }
+                if (n.type === 'Event') { icon = Star; color = 'text-blue-500'; bg = 'bg-blue-500/10'; }
                 if (n.type === 'Deadline') { icon = Calendar; color = 'text-orange-500'; bg = 'bg-orange-500/10'; }
 
                 return {

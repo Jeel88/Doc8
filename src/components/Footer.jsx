@@ -33,15 +33,6 @@ const Footer = () => {
                                 <Github size={14} className="text-white" />
                                 <span>Jeel</span>
                             </a>
-                            <a
-                                href="#"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 hover:bg-zinc-800 rounded-full text-xs font-medium transition-all group border border-zinc-700 hover:border-zinc-600"
-                            >
-                                <Github size={14} className="text-white" />
-                                <span>Teammate</span>
-                            </a>
                         </div>
                     </div>
                 </div>

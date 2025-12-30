@@ -25,7 +25,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             )}
 
             <aside className={`fixed left-0 top-0 h-screen w-64 bg-card border-r border-zinc-800 flex flex-col p-6 z-50 transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="mb-8 flex items-center justify-between">
+                <div className="mb-8 px-4 flex items-center justify-between">
                     <Logo />
                     <button onClick={onClose} className="md:hidden text-muted hover:text-white">
                         <X size={24} />
@@ -41,7 +41,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 to={item.path}
                                 onClick={onClose} // Close on click mobile
                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
-                                    ? 'bg-violet-600/10 text-primary' /* Active state */
+                                    ? 'bg-blue-600/10 text-primary' /* Active state */
                                     : 'text-muted hover:bg-zinc-800 hover:text-white'
                                     }`}
                             >
@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         to="/settings"
                         onClick={onClose}
                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${location.pathname === '/settings'
-                            ? 'bg-violet-600/10 text-primary'
+                            ? 'bg-blue-600/10 text-primary'
                             : 'text-muted hover:bg-zinc-800 hover:text-white'
                             }`}
                     >

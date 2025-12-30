@@ -8,9 +8,10 @@
   /* Zinc 900 */
   --bg-card-hover: #27272a;
 
-  --primary: #8b5cf6;
-  /* Violet 500 */
-  --primary-hover: #7c3aed;
+  /* Dodger Blue equivalent (Tailwind Blue-500) */
+  --primary: #3b82f6; 
+  /* Blue 600 */
+  --primary-hover: #2563eb;
 
   --accent-cyan: #06b6d4;
   /* Cyan 500 - for the '8' */

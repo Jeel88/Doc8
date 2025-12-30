@@ -305,7 +305,7 @@ const AiSummary = () => {
                     {/* Output Side */}
                     <div className="bg-card border border-zinc-800 rounded-xl p-6 flex flex-col relative overflow-hidden">
                         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <Sparkles size={18} className="text-violet-400" /> AI Output
+                            <Sparkles size={18} className="text-blue-400" /> AI Output
                         </h3>
 
                         <div ref={summaryRef} className="flex-1 overflow-y-auto custom-scrollbar pr-2">
