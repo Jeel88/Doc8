@@ -32,8 +32,8 @@ const Home = () => {
 
                     {/* Hero Visual - Floating Elements */}
                     <div className="relative w-full max-w-sm aspect-square hidden md:flex items-center justify-center">
-                        <div className="absolute -inset-4 bg-gradient-to-br from-violet-600 to-pink-500 rounded-full opacity-20 blur-3xl animate-pulse"></div>
-                        <div className="relative z-10 p-8 rounded-3xl bg-zinc-900/50 backdrop-blur-xl border border-white/10 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <div className="absolute -inset-4 bg-gradient-to-br from-violet-600 to-pink-500 rounded-full opacity-10 blur-3xl animate-pulse"></div>
+                        <div className="relative z-10 p-8 rounded-3xl bg-white-900/50 backdrop-blur-xl border border-white/10 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="w-12 h-12 rounded-full bg-zinc-800"></div>
                                 <div className="h-3 w-32 bg-zinc-800 rounded-full"></div>
