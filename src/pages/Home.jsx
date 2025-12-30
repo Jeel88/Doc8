@@ -32,7 +32,7 @@ const Home = () => {
 
                     {/* Hero Visual - Floating Elements */}
                     <div className="relative w-full max-w-sm aspect-square hidden md:flex items-center justify-center">
-                        <div className="absolute -inset-4 bg-gradient-to-br from-violet-600 to-pink-500 rounded-full opacity-10 blur-3xl animate-pulse"></div>
+                        <div className="absolute -inset-4 bg-gradient-to-br from-violet-600 to-pink-500 rounded-full opacity-25 blur-3xl animate-pulse"></div>
                         <div className="relative z-10 p-8 rounded-3xl bg-white-900/50 backdrop-blur-xl border border-white/10 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="w-12 h-12 rounded-full bg-zinc-800"></div>
@@ -58,7 +58,7 @@ const Home = () => {
                 <div className="relative z-10 px-6 py-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12">
                     <div className="max-w-xl text-center md:text-left">
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                            Instant AI Summaries
+                            Instant AI Assistant
                         </h2>
                         <p className="text-violet-100 text-lg mb-8 opacity-90">
                             Upload any document and get a concise, exam-ready summary in seconds. Perfect for last-minute revision.

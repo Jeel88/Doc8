@@ -10,7 +10,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: Home, label: 'Home', path: '/' },
         { icon: Compass, label: 'Browse', path: '/browse' },
         { icon: Bell, label: 'Notices', path: '/notices' },
-        { icon: Sparkles, label: 'AI Summarizer', path: '/ai-summary' },
+        { icon: Sparkles, label: 'AI Assistant', path: '/ai-summary' },
         { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 
@@ -57,8 +57,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                         to="/settings"
                         onClick={onClose}
                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${location.pathname === '/settings'
-                                ? 'bg-violet-600/10 text-primary'
-                                : 'text-muted hover:bg-zinc-800 hover:text-white'
+                            ? 'bg-violet-600/10 text-primary'
+                            : 'text-muted hover:bg-zinc-800 hover:text-white'
                             }`}
                     >
                         <Settings size={20} />
