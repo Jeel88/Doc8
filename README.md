@@ -44,7 +44,13 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 4. Database Setup (Crucial Step!) 🗄️
+### 4. Setup Authentication (Google Sign-In) 🔐
+1.  Go to your Supabase Project Dashboard.
+2.  Navigate to **Authentication** -> **Providers**.
+3.  Enable **Google** and configure your Client ID and Secret (from Google Cloud Console).
+4.  Ensure `http://localhost:5173` is added to your Redirect URLs in Supabase.
+
+### 5. Database Setup (Crucial Step!) 🗄️
 To make the app work (Subjects, Notices, Uploads), run the following SQL script in your **Supabase SQL Editor**:
 
 ```sql
@@ -120,7 +126,7 @@ create policy "Users can delete own files" on storage.objects for delete using (
 create policy "Anyone can download notes" on storage.objects for select using (bucket_id = 'notes');
 ```
 
-### 5. Run the App
+### 6. Run the App
 ```bash
 npm run dev
 ```
