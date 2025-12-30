@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { UploadCloud, FileText, Sparkles, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const AiSummary = () => {
+    const { user } = useAuth();
     const [file, setFile] = useState(null);
     const [isSummarizing, setIsSummarizing] = useState(false);
     const [summary, setSummary] = useState(null);
@@ -16,6 +18,11 @@ const AiSummary = () => {
     };
 
     const handleSummarize = () => {
+        if (!user) {
+            alert("Please sign in to use AI Summarizer!");
+            return;
+        }
+
         if (!file) return;
         setIsSummarizing(true);
         // Simulate API call
@@ -78,10 +85,10 @@ const AiSummary = () => {
                         onClick={handleSummarize}
                         disabled={!file || isSummarizing}
                         className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${!file
-                                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                                : isSummarizing
-                                    ? 'bg-primary/50 text-white cursor-wait'
-                                    : 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20'
+                            ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                            : isSummarizing
+                                ? 'bg-primary/50 text-white cursor-wait'
+                                : 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20'
                             }`}
                     >
                         {isSummarizing ? (

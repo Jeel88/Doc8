@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { GraduationCap, Book, Laptop, Rocket, FileText, ChevronRight, ArrowLeft, Upload, Trash2, Plus } from 'lucide-react';
+import { GraduationCap, Book, Laptop, Rocket, FileText, ChevronRight, ArrowLeft, Upload, Trash2, Plus, Loader2 } from 'lucide-react';
 // Subject Icons
 import { Code, Calculator, Atom, Globe, Briefcase, Music, Palette } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 const yearData = [
     { id: '1st Year', label: '1st Year', semesters: ['Sem 1', 'Sem 2'], icon: GraduationCap, gradient: 'from-violet-500 to-fuchsia-500' },
@@ -22,14 +24,8 @@ const initialSubjects = [
     { id: 'mus', name: 'Music', icon: Music, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
 ];
 
-const mockNotes = [
-    { id: 1, title: 'Calculus I - Limits & Derivatives', author: 'Dr. Smith', size: '2.4 MB' },
-    { id: 2, title: 'Intro to Programming (Python)', author: 'Prof. Johnson', size: '1.8 MB' },
-    { id: 3, title: 'Mechanics - Newton\'s Laws', author: 'Alex Chen', size: '3.1 MB' },
-    { id: 4, title: 'Linear Algebra Notes', author: 'Sarah Lee', size: '4.2 MB' },
-];
-
 const Browse = () => {
+    const { user } = useAuth();
     const location = useLocation();
     const [selectedYear, setSelectedYear] = useState(null);
     const [selectedSemester, setSelectedSemester] = useState(null);
@@ -37,23 +33,78 @@ const Browse = () => {
     const [subjectList, setSubjectList] = useState(initialSubjects);
 
     // Upload & Notes State
-    const [notesList, setNotesList] = useState(mockNotes);
+    const [notesList, setNotesList] = useState([]);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [newNote, setNewNote] = useState({ title: '', author: '' });
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
-    const handleUploadSubmit = (e) => {
+    // Fetch Notes from Supabase
+    useEffect(() => {
+        fetchNotes();
+    }, []);
+
+    const fetchNotes = async () => {
+        const { data, error } = await supabase
+            .from('notes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) console.error('Error fetching notes:', error);
+        else setNotesList(data || []);
+    };
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    const handleUploadSubmit = async (e) => {
         e.preventDefault();
-        const noteToAdd = {
-            id: Date.now(),
-            title: newNote.title,
-            author: newNote.author,
-            size: '1.2 MB', // Mock size
-            time: 'Just now',
-            subjectId: selectedSubject.id
-        };
-        setNotesList([noteToAdd, ...notesList]);
-        setNewNote({ title: '', author: '' });
-        setIsUploadModalOpen(false);
+        if (!selectedFile || !user) return;
+
+        setIsUploading(true);
+        try {
+            // 1. Upload to Cloudinary
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`,
+                { method: 'POST', body: formData }
+            );
+            const data = await response.json();
+
+            if (data.secure_url) {
+                // 2. Insert into Supabase
+                const { error } = await supabase.from('notes').insert([
+                    {
+                        title: newNote.title,
+                        author: newNote.author,
+                        file_url: data.secure_url,
+                        file_size: (data.bytes / 1024 / 1024).toFixed(2) + ' MB',
+                        subject_id: selectedSubject?.id || null, // Handle general uploads if any
+                        user_id: user.id
+                    }
+                ]);
+
+                if (error) throw error;
+
+                // Reset and Refresh
+                setNewNote({ title: '', author: '' });
+                setSelectedFile(null);
+                setIsUploadModalOpen(false);
+                fetchNotes(); // Refresh list
+                alert('Note uploaded successfully!');
+            }
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Upload failed: ' + error.message);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     // Search State
@@ -68,7 +119,7 @@ const Browse = () => {
             const results = notesList.filter(note =>
                 note.title.toLowerCase().includes(query) ||
                 note.author.toLowerCase().includes(query) ||
-                (note.subjectId && subjectList.find(s => s.id === note.subjectId)?.name.toLowerCase().includes(query))
+                (note.subject_id && subjectList.find(s => s.id === note.subject_id)?.name.toLowerCase().includes(query))
             );
             setSearchResults(results);
             // Clear other selections
@@ -267,7 +318,13 @@ const Browse = () => {
                                         </div>
 
                                         <button
-                                            onClick={() => setIsUploadModalOpen(true)}
+                                            onClick={() => {
+                                                if (!user) {
+                                                    alert("Please sign in to upload notes!");
+                                                    return;
+                                                }
+                                                setIsUploadModalOpen(true);
+                                            }}
                                             className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
                                         >
                                             <Upload size={16} />
@@ -276,7 +333,7 @@ const Browse = () => {
                                     </div>
 
                                     {/* Notes Grid */}
-                                    {notesList.filter(n => n.subjectId === selectedSubject.id || !n.subjectId).length === 0 ? (
+                                    {notesList.filter(n => n.subject_id === selectedSubject.id || !n.subject_id).length === 0 ? (
                                         <div className="text-center py-12 text-muted">
                                             <FileText size={48} className="mx-auto mb-4 opacity-20" />
                                             <p>No notes uploaded for this subject yet.</p>
@@ -284,17 +341,20 @@ const Browse = () => {
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {notesList.filter(n => n.subjectId === selectedSubject.id || !n.subjectId).map((note) => (
+                                            {notesList.filter(n => n.subject_id === selectedSubject.id || !n.subject_id).map((note) => (
                                                 <div key={note.id} className="bg-card border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all group flex items-start gap-4">
                                                     <div className="p-3 bg-zinc-900 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
                                                         <FileText size={24} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <h4 className="font-semibold text-white text-lg truncate group-hover:text-primary transition-colors">{note.title}</h4>
+                                                        {/* Open File on Click */}
+                                                        <a href={note.file_url} target="_blank" rel="noopener noreferrer" className="block group-hover:underline">
+                                                            <h4 className="font-semibold text-white text-lg truncate group-hover:text-primary transition-colors">{note.title}</h4>
+                                                        </a>
                                                         <p className="text-sm text-muted mb-3">{note.author}</p>
                                                         <div className="flex items-center gap-3 text-xs text-muted">
-                                                            <span className="bg-zinc-800 px-2 py-1 rounded text-zinc-300">{note.size}</span>
-                                                            <span>• {note.time || 'Just now'}</span>
+                                                            <span className="bg-zinc-800 px-2 py-1 rounded text-zinc-300">{note.file_size || note.size}</span>
+                                                            <span>• {new Date(note.created_at).toLocaleDateString()}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -341,17 +401,33 @@ const Browse = () => {
                                         />
                                     </div>
 
-                                    <div className="border-2 border-dashed border-zinc-800 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-zinc-900/50 hover:border-zinc-600 transition-all">
-                                        <Upload size={24} className="text-zinc-500 mb-2" />
-                                        <p className="text-sm text-zinc-400">Click to attach PDF or Doc</p>
-                                        <p className="text-xs text-zinc-600 mt-1">(Simulation only)</p>
+                                    <div className="border-2 border-dashed border-zinc-800 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-zinc-900/50 hover:border-zinc-600 transition-all relative">
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.doc,.docx"
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            onChange={handleFileChange}
+                                            required
+                                        />
+                                        <Upload size={24} className={`mb-2 ${selectedFile ? 'text-primary' : 'text-zinc-500'}`} />
+                                        <p className="text-sm text-zinc-400">
+                                            {selectedFile ? selectedFile.name : "Click to attach PDF or Doc"}
+                                        </p>
+                                        <p className="text-xs text-zinc-600 mt-1">(Max 10MB)</p>
                                     </div>
 
                                     <button
                                         type="submit"
-                                        className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all mt-4"
+                                        disabled={isUploading}
+                                        className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all mt-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Upload Note
+                                        {isUploading ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" /> Uploading...
+                                            </>
+                                        ) : (
+                                            "Upload Note"
+                                        )}
                                     </button>
                                 </form>
                             </div>

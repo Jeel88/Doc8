@@ -1,16 +1,79 @@
-# React + Vite
+# Doc8 - Collaborative Note Sharing Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Doc8** is a modern, dark-themed web application designed for college students to upload, share, and discover academic notes. Pass your exams with the power of community knowledge!
 
-Currently, two official plugins are available:
+![Doc8 Preview](https://via.placeholder.com/800x400.png?text=Doc8+Preview)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+-   **Browse by Year/Semester**: Drill down quickly to find exactly what you need.
+-   **Modern Dark UI**: Aesthetic, eye-friendly design with intuitive navigation.
+-   **Notice Board**: Stay updated with exam schedules and college events.
+-   **AI Summarizer**: (Beta) Upload PDFs and get instant study summaries.
+-   **Community**: Discuss topics and request notes from other students.
+-   **Global Search**: Find notes and subjects instantly from the header.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+-   **Frontend**: React (Vite)
+-   **Styling**: Tailwind CSS
+-   **Database**: Supabase (PostgreSQL)
+-   **Authentication**: Supabase Auth (Google, GitHub)
+-   **Storage**: Cloudinary (for PDF/Doc hosting)
+-   **Icons**: Lucide React
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📦 Installation & Setup
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/your-username/doc8.git
+    cd doc8
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Setup**
+    Create a `.env` file in the root directory and add your keys:
+    ```env
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+    VITE_CLOUDINARY_UPLOAD_PRESET=doc8_uploads
+    ```
+
+4.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+
+## 🔐 Authentication Setup
+
+This project uses **Supabase Auth**.
+
+1.  Go to your Supabase Dashboard -> Authentication -> Providers.
+2.  **Google Auth**:
+    *   Create a Project in Google Cloud Console.
+    *   Create OAuth Credentials (Web Application).
+    *   Add Supabase Callback URL to "Authorized Redirect URIs".
+    *   Copy Client ID & Secret to Supabase.
+3.  **GitHub Auth**:
+    *   Create a GitHub OAuth App.
+    *   Add Supabase Callback URL.
+    *   Copy Client ID & Secret to Supabase.
+
+## ☁️ Cloudinary Setup
+
+1.  Create a Cloudinary account.
+2.  Go to Settings -> Upload.
+3.  Add an **Unsigned** upload preset named `doc8_uploads`.
+
+## 🤝 Contributing
+
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+
+## 📄 License
+
+[MIT](https://choosealicense.com/licenses/mit/)

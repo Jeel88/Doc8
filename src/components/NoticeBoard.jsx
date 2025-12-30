@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Bell, FileText, Star, ThumbsUp, ThumbsDown, Paperclip, Plus, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const initialNotices = [
     {
@@ -61,11 +62,17 @@ const initialNotices = [
 ];
 
 const NoticeBoard = () => {
+    const { user } = useAuth();
     const [notices, setNotices] = useState(initialNotices);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [newNotice, setNewNotice] = useState({ title: '', type: 'General', hasAttachment: false });
 
     const handleReaction = (id, reaction) => {
+        if (!user) {
+            alert("Please sign in to react to notices!");
+            return;
+        }
+
         setNotices(currentNotices =>
             currentNotices.map(notice => {
                 if (notice.id !== id) return notice;
@@ -126,7 +133,13 @@ const NoticeBoard = () => {
                     <p className="text-muted text-sm mt-1">Stay updated with latest announcements</p>
                 </div>
                 <button
-                    onClick={() => setIsPostModalOpen(true)}
+                    onClick={() => {
+                        if (!user) {
+                            alert("Please sign in to post notices!");
+                            return;
+                        }
+                        setIsPostModalOpen(true);
+                    }}
                     className="px-4 py-2 bg-primary/20 text-primary hover:bg-primary/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                 >
                     <Plus size={16} /> Post Notice
@@ -233,8 +246,8 @@ const NoticeBoard = () => {
 
                             <div
                                 className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${newNotice.hasAttachment
-                                        ? 'border-primary bg-primary/10'
-                                        : 'border-zinc-800 hover:bg-zinc-900/50 hover:border-zinc-600'
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-zinc-800 hover:bg-zinc-900/50 hover:border-zinc-600'
                                     }`}
                                 onClick={() => setNewNotice({ ...newNotice, hasAttachment: !newNotice.hasAttachment })}
                             >
