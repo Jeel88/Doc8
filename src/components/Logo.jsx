@@ -8,7 +8,7 @@ const Logo = () => {
                 <BookOpen size={20} />
             </div>
             <span className="text-2xl font-bold tracking-tight text-white">
-                Doc<span className="text-cyan">8</span>
+                Doc<span className="text-cyan-400">8</span>
             </span>
         </div>
     );

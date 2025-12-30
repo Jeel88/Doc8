@@ -33,7 +33,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 </div>
 
                 <nav className="flex-1 flex flex-col gap-2">
-                    {navItems.map((item) => {
+                    {navItems.filter(item => item.label !== 'Settings').map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
                             <Link
@@ -51,6 +51,20 @@ const Sidebar = ({ isOpen, onClose }) => {
                         );
                     })}
                 </nav>
+
+                <div className="border-t border-zinc-800 pt-4 mt-auto">
+                    <Link
+                        to="/settings"
+                        onClick={onClose}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${location.pathname === '/settings'
+                                ? 'bg-violet-600/10 text-primary'
+                                : 'text-muted hover:bg-zinc-800 hover:text-white'
+                            }`}
+                    >
+                        <Settings size={20} />
+                        <span className="font-medium">Settings</span>
+                    </Link>
+                </div>
             </aside>
         </>
     );

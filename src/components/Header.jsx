@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 
 const Header = ({ onMenuClick }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const navigate = useNavigate();
+
+    const handleSearch = (e) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            navigate('/browse', { state: { searchQuery } });
+        }
+    };
 
     return (
         <header className="h-16 flex items-center justify-between px-4 md:px-8 border-b border-zinc-800 bg-bg-dark/50 backdrop-blur-md sticky top-0 z-40">
@@ -24,8 +32,11 @@ const Header = ({ onMenuClick }) => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={18} />
                         <input
                             type="text"
-                            placeholder="Search..."
+                            placeholder="Search notes, subjects..."
                             className="w-full bg-zinc-900/50 border border-zinc-800 rounded-full py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-zinc-600"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={handleSearch}
                         />
                     </div>
                 </div>
