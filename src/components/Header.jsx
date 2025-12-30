@@ -36,10 +36,6 @@ const Header = ({ onMenuClick }) => {
                 <button className="sm:hidden text-muted">
                     <Search size={20} />
                 </button>
-                <button className="p-2 text-muted hover:text-white hover:bg-zinc-800 rounded-full transition-colors relative">
-                    <Bell size={20} />
-                    <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-zinc-900"></span>
-                </button>
 
                 <div className="w-px h-6 bg-zinc-800 mx-2 hidden sm:block"></div>
 

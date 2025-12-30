@@ -1,4 +1,3 @@
-```javascript
 import React, { useState } from 'react';
 import { Calendar, Bell, FileText, Star, ThumbsUp, ThumbsDown, Paperclip, Plus, X } from 'lucide-react';
 
@@ -67,7 +66,7 @@ const NoticeBoard = () => {
     const [newNotice, setNewNotice] = useState({ title: '', type: 'General', hasAttachment: false });
 
     const handleReaction = (id, reaction) => {
-        setNotices(currentNotices => 
+        setNotices(currentNotices =>
             currentNotices.map(notice => {
                 if (notice.id !== id) return notice;
 
@@ -126,7 +125,7 @@ const NoticeBoard = () => {
                     </h2>
                     <p className="text-muted text-sm mt-1">Stay updated with latest announcements</p>
                 </div>
-                <button 
+                <button
                     onClick={() => setIsPostModalOpen(true)}
                     className="px-4 py-2 bg-primary/20 text-primary hover:bg-primary/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                 >
@@ -138,18 +137,18 @@ const NoticeBoard = () => {
                 {notices.map((notice) => (
                     <div key={notice.id} className="bg-card border border-zinc-800 rounded-xl p-4 flex flex-col gap-3 hover:bg-zinc-800/50 transition-colors group">
                         <div className="flex items-start gap-4">
-                            <div className={`p - 3 rounded - lg ${ notice.bg } ${ notice.color } `}>
+                            <div className={`p-3 rounded-lg ${notice.bg} ${notice.color}`}>
                                 <notice.icon size={20} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
-                                    <span className={`text - [10px] uppercase font - bold px - 2 py - 0.5 rounded - full ${ notice.bg } ${ notice.color } border ${ notice.border } `}>
+                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${notice.bg} ${notice.color} border ${notice.border}`}>
                                         {notice.type}
                                     </span>
                                     <span className="text-xs text-muted">{notice.time}</span>
                                 </div>
                                 <h3 className="font-semibold text-white group-hover:text-primary transition-colors truncate">{notice.title}</h3>
-                                
+
                                 {/* Attachment View */}
                                 {notice.attachment && (
                                     <div className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-zinc-900/80 border border-zinc-800/50 max-w-fit">
@@ -159,40 +158,38 @@ const NoticeBoard = () => {
                                 )}
                             </div>
                         </div>
-                        
+
                         {/* Reaction Bar */}
                         <div className="flex items-center gap-4 pt-3 border-t border-zinc-800 mt-auto px-1">
-                             <div className="flex items-center gap-1">
-                                 <button 
+                            <div className="flex items-center gap-1">
+                                <button
                                     onClick={() => handleReaction(notice.id, 'like')}
-                                    className={`p - 1.5 rounded - full transition - all flex items - center gap - 1.5 ${
-    notice.userReaction === 'like'
-        ? 'text-green-400 bg-green-400/10'
-        : 'text-muted hover:text-green-400 hover:bg-green-400/10'
-} `}
-                                 >
-                                     <ThumbsUp size={16} fill={notice.userReaction === 'like' ? "currentColor" : "none"} />
-                                 </button>
-                                 <span className={`text - xs font - medium ${ notice.userReaction === 'like' ? 'text-green-400' : 'text-muted' } `}>
+                                    className={`p-1.5 rounded-full transition-all flex items-center gap-1.5 ${notice.userReaction === 'like'
+                                        ? 'text-green-400 bg-green-400/10'
+                                        : 'text-muted hover:text-green-400 hover:bg-green-400/10'
+                                        }`}
+                                >
+                                    <ThumbsUp size={16} fill={notice.userReaction === 'like' ? "currentColor" : "none"} />
+                                </button>
+                                <span className={`text-xs font-medium ${notice.userReaction === 'like' ? 'text-green-400' : 'text-muted'}`}>
                                     {notice.likes}
-                                 </span>
-                             </div>
+                                </span>
+                            </div>
 
-                             <div className="flex items-center gap-1">
-                                 <button 
+                            <div className="flex items-center gap-1">
+                                <button
                                     onClick={() => handleReaction(notice.id, 'dislike')}
-                                    className={`p - 1.5 rounded - full transition - all flex items - center gap - 1.5 ${
-    notice.userReaction === 'dislike'
-        ? 'text-red-400 bg-red-400/10'
-        : 'text-muted hover:text-red-400 hover:bg-red-400/10'
-} `}
-                                 >
-                                     <ThumbsDown size={16} fill={notice.userReaction === 'dislike' ? "currentColor" : "none"} />
-                                 </button>
-                                 <span className={`text - xs font - medium ${ notice.userReaction === 'dislike' ? 'text-red-400' : 'text-muted' } `}>
+                                    className={`p-1.5 rounded-full transition-all flex items-center gap-1.5 ${notice.userReaction === 'dislike'
+                                        ? 'text-red-400 bg-red-400/10'
+                                        : 'text-muted hover:text-red-400 hover:bg-red-400/10'
+                                        }`}
+                                >
+                                    <ThumbsDown size={16} fill={notice.userReaction === 'dislike' ? "currentColor" : "none"} />
+                                </button>
+                                <span className={`text-xs font-medium ${notice.userReaction === 'dislike' ? 'text-red-400' : 'text-muted'}`}>
                                     {notice.dislikes}
-                                 </span>
-                             </div>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -200,7 +197,7 @@ const NoticeBoard = () => {
 
             {/* Post Notice Modal */}
             {isPostModalOpen && (
-                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-card border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold text-white">Post New Notice</h2>
@@ -208,24 +205,24 @@ const NoticeBoard = () => {
                                 <X size={24} />
                             </button>
                         </div>
-                        
+
                         <form onSubmit={handlePostNotice} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-zinc-400 mb-1">Title</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     required
                                     className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
                                     value={newNotice.title}
-                                    onChange={(e) => setNewNotice({...newNotice, title: e.target.value})}
+                                    onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-zinc-400 mb-1">Category</label>
-                                <select 
+                                <select
                                     className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
                                     value={newNotice.type}
-                                    onChange={(e) => setNewNotice({...newNotice, type: e.target.value})}
+                                    onChange={(e) => setNewNotice({ ...newNotice, type: e.target.value })}
                                 >
                                     <option value="General">General</option>
                                     <option value="Exam">Exam</option>
@@ -233,22 +230,25 @@ const NoticeBoard = () => {
                                     <option value="Deadline">Deadline</option>
                                 </select>
                             </div>
-                            
-                            <div className="flex items-center gap-2 mt-4">
-                                <input 
-                                    type="checkbox" 
-                                    id="attach"
-                                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-primary focus:ring-primary"
-                                    checked={newNotice.hasAttachment}
-                                    onChange={(e) => setNewNotice({...newNotice, hasAttachment: e.target.checked})}
-                                />
-                                <label htmlFor="attach" className="text-sm text-zinc-300 flex items-center gap-2 cursor-pointer">
-                                    <Paperclip size={16} /> Attach File (Simulation)
-                                </label>
+
+                            <div
+                                className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${newNotice.hasAttachment
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-zinc-800 hover:bg-zinc-900/50 hover:border-zinc-600'
+                                    }`}
+                                onClick={() => setNewNotice({ ...newNotice, hasAttachment: !newNotice.hasAttachment })}
+                            >
+                                <Paperclip size={24} className={`mb-2 ${newNotice.hasAttachment ? 'text-primary' : 'text-zinc-500'}`} />
+                                <p className={`text-sm ${newNotice.hasAttachment ? 'text-primary font-medium' : 'text-zinc-400'}`}>
+                                    {newNotice.hasAttachment ? 'File Attached (Simulated)' : 'Click to attach PDF or Doc'}
+                                </p>
+                                {newNotice.hasAttachment && (
+                                    <p className="text-xs text-zinc-500 mt-1">New_Notice_Attachment.pdf</p>
+                                )}
                             </div>
 
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all mt-4"
                             >
                                 Post Notice
@@ -262,4 +262,3 @@ const NoticeBoard = () => {
 };
 
 export default NoticeBoard;
-```
