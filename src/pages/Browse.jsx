@@ -13,16 +13,7 @@ const yearData = [
     { id: '4th Year', label: 'Final Year', semesters: ['Sem 7', 'Sem 8'], icon: Rocket, gradient: 'from-orange-400 to-red-500' },
 ];
 
-const initialSubjects = [
-    { id: 'cs', name: 'Computer Science', icon: Code, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { id: 'math', name: 'Mathematics', icon: Calculator, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { id: 'phy', name: 'Physics', icon: Atom, color: 'text-violet-500', bg: 'bg-violet-500/10' },
-    { id: 'lit', name: 'Literature', icon: Book, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-    { id: 'hist', name: 'History', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { id: 'bus', name: 'Business', icon: Briefcase, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-    { id: 'arts', name: 'Arts', icon: Palette, color: 'text-red-500', bg: 'bg-red-500/10' },
-    { id: 'mus', name: 'Music', icon: Music, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-];
+const initialSubjects = [];
 
 const Browse = () => {
     const { user } = useAuth();
@@ -30,7 +21,9 @@ const Browse = () => {
     const [selectedYear, setSelectedYear] = useState(null);
     const [selectedSemester, setSelectedSemester] = useState(null);
     const [selectedSubject, setSelectedSubject] = useState(null);
-    const [subjectList, setSubjectList] = useState(initialSubjects);
+    const [subjectList, setSubjectList] = useState([]);
+    const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+    const [newSubject, setNewSubject] = useState({ name: '' });
 
     // Upload & Notes State
     const [notesList, setNotesList] = useState([]);
@@ -39,16 +32,30 @@ const Browse = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Fetch Notes from Supabase
+    // Fetch Notes & Subjects from Supabase
     useEffect(() => {
         fetchNotes();
-    }, []);
+        fetchSubjects();
+    }, [selectedYear, selectedSemester]);
+
+    const fetchSubjects = async () => {
+        if (!selectedYear || !selectedSemester) return;
+
+        const { data, error } = await supabase
+            .from('subjects')
+            .select('*')
+            .eq('year', selectedYear.label) // '1st Year'
+            .eq('semester', selectedSemester);
+
+        if (error) console.error('Error fetching subjects:', error);
+        else setSubjectList(data || []);
+    };
 
     const fetchNotes = async () => {
         const { data, error } = await supabase
             .from('notes')
             .select('*')
-            .order('created_at', { ascending: false });
+        // .order('created_at', { ascending: false }); 
 
         if (error) console.error('Error fetching notes:', error);
         else setNotesList(data || []);
@@ -56,7 +63,12 @@ const Browse = () => {
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
-            setSelectedFile(e.target.files[0]);
+            const file = e.target.files[0];
+            if (file.size > 10 * 1024 * 1024) {
+                alert("File size exceeds 10MB limit.");
+                return;
+            }
+            setSelectedFile(file);
         }
     };
 
@@ -66,44 +78,101 @@ const Browse = () => {
 
         setIsUploading(true);
         try {
-            // 1. Upload to Cloudinary
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+            // 1. Upload to Supabase Storage
+            const fileExt = selectedFile.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `${user.id}/${fileName}`;
 
-            const response = await fetch(
-                `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`,
-                { method: 'POST', body: formData }
-            );
-            const data = await response.json();
+            const { error: uploadError } = await supabase.storage
+                .from('notes')
+                .upload(filePath, selectedFile);
 
-            if (data.secure_url) {
-                // 2. Insert into Supabase
-                const { error } = await supabase.from('notes').insert([
-                    {
-                        title: newNote.title,
-                        author: newNote.author,
-                        file_url: data.secure_url,
-                        file_size: (data.bytes / 1024 / 1024).toFixed(2) + ' MB',
-                        subject_id: selectedSubject?.id || null, // Handle general uploads if any
-                        user_id: user.id
-                    }
-                ]);
+            if (uploadError) throw uploadError;
 
-                if (error) throw error;
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('notes')
+                .getPublicUrl(filePath);
 
-                // Reset and Refresh
-                setNewNote({ title: '', author: '' });
-                setSelectedFile(null);
-                setIsUploadModalOpen(false);
-                fetchNotes(); // Refresh list
-                alert('Note uploaded successfully!');
-            }
+            // 3. Insert into Database
+            const { error: dbError } = await supabase.from('notes').insert([
+                {
+                    title: newNote.title,
+                    author: newNote.author,
+                    file_url: publicUrl,
+                    file_size: (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB',
+                    subject_id: selectedSubject?.id || null,
+                    user_id: user.id
+                }
+            ]);
+
+            if (dbError) throw dbError;
+
+            // Reset and Refresh
+            setNewNote({ title: '', author: '' });
+            setSelectedFile(null);
+            setIsUploadModalOpen(false);
+            fetchNotes();
+            alert('Note uploaded successfully!');
+
         } catch (error) {
             console.error('Upload failed:', error);
             alert('Upload failed: ' + error.message);
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    // Handle New Subject
+    const handleAddSubject = async (e) => {
+        e.preventDefault();
+        if (!newSubject.name || !user) return;
+
+        try {
+            // Random color assignment
+            const colors = [
+                { color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                { color: 'text-orange-500', bg: 'bg-orange-500/10' },
+                { color: 'text-violet-500', bg: 'bg-violet-500/10' },
+                { color: 'text-pink-500', bg: 'bg-pink-500/10' },
+                { color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            ];
+            const randomStyle = colors[Math.floor(Math.random() * colors.length)];
+
+            const { error } = await supabase.from('subjects').insert([
+                {
+                    name: newSubject.name,
+                    year: selectedYear.label,
+                    semester: selectedSemester,
+                    icon: 'Book', // Default icon string
+                    color: randomStyle.color,
+                    user_id: user.id // Store creator!
+                }
+            ]);
+
+            if (error) throw error;
+
+            setNewSubject({ name: '' });
+            setIsSubjectModalOpen(false);
+            fetchSubjects();
+            alert("Subject added!");
+        } catch (err) {
+            console.error("Error adding subject:", err);
+            alert("Error adding subject: " + err.message);
+        }
+    };
+
+    const handleDeleteSubject = async (e, subject) => {
+        e.stopPropagation();
+        if (!window.confirm(`Delete subject "${subject.name}"? This will allow you to delete it, but notes inside might become orphaned.`)) return;
+
+        try {
+            const { error } = await supabase.from('subjects').delete().eq('id', subject.id);
+            if (error) throw error;
+            fetchSubjects();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete subject: " + err.message);
         }
     };
 
@@ -282,16 +351,35 @@ const Browse = () => {
                                                 onClick={() => setSelectedSubject(subject)}
                                                 className="relative bg-card border border-zinc-800 rounded-xl p-4 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all text-left group cursor-pointer"
                                             >
-                                                <div className={`w-10 h-10 rounded-lg ${subject.bg} ${subject.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                                                    <subject.icon size={20} />
+                                                {/* Delete Button for Subject Owner */}
+                                                {user && user.id === subject.user_id && (
+                                                    <button
+                                                        onClick={(e) => handleDeleteSubject(e, subject)}
+                                                        className="absolute top-2 right-2 p-1.5 text-zinc-500 hover:text-red-500 hover:bg-zinc-900 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10"
+                                                        title="Delete Subject"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+
+                                                <div className={`w-10 h-10 rounded-lg ${subject.bg || 'bg-zinc-800'} ${subject.color || 'text-zinc-400'} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                                                    <Book size={20} />
                                                 </div>
-                                                <h4 className="font-semibold text-white">{subject.name}</h4>
-                                                <p className="text-xs text-muted">12 Notes</p>
+                                                <h4 className="font-semibold text-white truncate pr-4">{subject.name}</h4>
+                                                <p className="text-xs text-muted">
+                                                    {notesList.filter(n => n.subject_id === subject.id).length} Notes
+                                                </p>
                                             </div>
                                         ))}
 
-                                        {/* Add Subject Placeholder */}
-                                        <button className="bg-dashed border-2 border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 gap-2 transition-all">
+                                        {/* Add Subject Button */}
+                                        <button
+                                            onClick={() => {
+                                                if (!user) return alert("Sign in to add subjects");
+                                                setIsSubjectModalOpen(true);
+                                            }}
+                                            className="bg-dashed border-2 border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 gap-2 transition-all"
+                                        >
                                             <Plus size={24} />
                                             <span className="text-sm font-medium">Add Subject</span>
                                         </button>
@@ -302,7 +390,7 @@ const Browse = () => {
                             {/* Notes List */}
                             {selectedSubject && (
                                 <section>
-                                    <div className="flex items-center justify-between mb-6">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                                         <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => setSelectedSubject(null)}
@@ -311,8 +399,8 @@ const Browse = () => {
                                                 <ArrowLeft size={20} />
                                             </button>
                                             <div>
-                                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                                    {selectedSubject.name} <span className="text-zinc-600">/</span> {selectedSemester}
+                                                <h3 className="text-xl font-bold text-white flex flex-wrap items-center gap-2">
+                                                    {selectedSubject.name} <span className="text-zinc-600 hidden md:inline">/</span> <span className="text-sm md:text-xl text-primary md:text-zinc-400 block md:inline w-full md:w-auto mt-1 md:mt-0">{selectedSemester}</span>
                                                 </h3>
                                             </div>
                                         </div>
@@ -325,7 +413,7 @@ const Browse = () => {
                                                 }
                                                 setIsUploadModalOpen(true);
                                             }}
-                                            className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+                                            className="w-full md:w-auto bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20"
                                         >
                                             <Upload size={16} />
                                             Upload Note
@@ -342,14 +430,14 @@ const Browse = () => {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {notesList.filter(n => n.subject_id === selectedSubject.id || !n.subject_id).map((note) => (
-                                                <div key={note.id} className="bg-card border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all group flex items-start gap-4">
+                                                <div key={note.id} className="bg-card border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all group flex items-start gap-4 relative">
                                                     <div className="p-3 bg-zinc-900 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
                                                         <FileText size={24} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         {/* Open File on Click */}
                                                         <a href={note.file_url} target="_blank" rel="noopener noreferrer" className="block group-hover:underline">
-                                                            <h4 className="font-semibold text-white text-lg truncate group-hover:text-primary transition-colors">{note.title}</h4>
+                                                            <h4 className="font-semibold text-white text-lg truncate group-hover:text-primary transition-colors pr-6">{note.title}</h4>
                                                         </a>
                                                         <p className="text-sm text-muted mb-3">{note.author}</p>
                                                         <div className="flex items-center gap-3 text-xs text-muted">
@@ -357,6 +445,54 @@ const Browse = () => {
                                                             <span>• {new Date(note.created_at).toLocaleDateString()}</span>
                                                         </div>
                                                     </div>
+
+                                                    {/* Delete Button (Only for owner) */}
+                                                    {user && user.id === note.user_id && (
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (!window.confirm("Are you sure you want to delete this note?")) return;
+
+                                                                try {
+                                                                    // 1. Delete from Storage (if file_url contains filename)
+                                                                    // Extract filename from URL: .../notes/public/fileName.pdf
+                                                                    const urlParts = note.file_url.split('/');
+                                                                    const fileName = urlParts[urlParts.length - 1];
+                                                                    // We uploaded with path: user.id/fileName. 
+                                                                    // BUT public URL structure might be different.
+                                                                    // Safer: we stored specific structure. 
+                                                                    // If we used the logic from upload: `${user.id}/${fileName}`
+
+                                                                    // Try to construct path
+                                                                    const filePath = `${user.id}/${fileName}`;
+
+                                                                    const { error: storageError } = await supabase.storage
+                                                                        .from('notes')
+                                                                        .remove([filePath]);
+
+                                                                    if (storageError) console.warn("Storage delete warning:", storageError);
+
+                                                                    // 2. Delete from DB
+                                                                    const { error: dbError } = await supabase
+                                                                        .from('notes')
+                                                                        .delete()
+                                                                        .eq('id', note.id);
+
+                                                                    if (dbError) throw dbError;
+
+                                                                    alert("Note deleted.");
+                                                                    fetchNotes();
+                                                                } catch (err) {
+                                                                    console.error("Delete failed", err);
+                                                                    alert("Could not delete note: " + err.message);
+                                                                }
+                                                            }}
+                                                            className="absolute top-4 right-4 text-zinc-600 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-zinc-800"
+                                                            title="Delete Note"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -428,6 +564,42 @@ const Browse = () => {
                                         ) : (
                                             "Upload Note"
                                         )}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Add Subject Modal */}
+                    {isSubjectModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                            <div className="bg-card border border-zinc-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold text-white">Add Subject</h2>
+                                    <button onClick={() => setIsSubjectModalOpen(false)} className="text-zinc-500 hover:text-white">
+                                        <Plus size={24} className="rotate-45" />
+                                    </button>
+                                </div>
+                                <p className="text-sm text-muted mb-6">Adding to <strong>{selectedYear?.label} - {selectedSemester}</strong></p>
+
+                                <form onSubmit={handleAddSubject} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-zinc-400 mb-1">Subject Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            autoFocus
+                                            placeholder="e.g. Advanced Algorithms"
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                            value={newSubject.name}
+                                            onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all mt-2"
+                                    >
+                                        Add Subject
                                     </button>
                                 </form>
                             </div>
