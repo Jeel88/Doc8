@@ -31,10 +31,13 @@ export const AuthProvider = ({ children }) => {
 
     const signInWithGoogle = async () => {
         try {
+            const redirectUrl = window.location.origin + '/';
+            console.log('Attempting Google Sign-In with redirect to:', redirectUrl);
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin
+                    redirectTo: redirectUrl
                 }
             });
             if (error) throw error;
@@ -46,10 +49,13 @@ export const AuthProvider = ({ children }) => {
 
     const signInWithGithub = async () => {
         try {
+            const redirectUrl = window.location.origin + '/';
+            console.log('Attempting Github Sign-In with redirect to:', redirectUrl);
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'github',
                 options: {
-                    redirectTo: window.location.origin
+                    redirectTo: redirectUrl
                 }
             });
             if (error) throw error;

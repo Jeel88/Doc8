@@ -1,5 +1,7 @@
 # Doc8 - The Ultimate Student Collaborative Platform 🎓🚀
 
+**🚀 Live Demo:** [https://doc8.vercel.app/](https://doc8.vercel.app/)
+
 **Doc8** is a modern, responsive web application designed for college students to share notes, stay updated with notices, and collaborate seamlessly. It features a stunning UI, secure file uploads, and a dynamic notice board.
 
 ![Doc8 Preview](https://via.placeholder.com/800x400?text=Doc8+Preview+Image)
@@ -48,7 +50,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 1.  Go to your Supabase Project Dashboard.
 2.  Navigate to **Authentication** -> **Providers**.
 3.  Enable **Google** and configure your Client ID and Secret (from Google Cloud Console).
-4.  Ensure `http://localhost:5173` is added to your Redirect URLs in Supabase.
+4.  Ensure `http://localhost:5173` AND your production URL (e.g., `https://doc8.vercel.app/`) are added to your **Redirect URLs** in Supabase.
 
 ### 5. Database Setup (Crucial Step!) 🗄️
 To make the app work (Subjects, Notices, Uploads), run the following SQL script in your **Supabase SQL Editor**:
