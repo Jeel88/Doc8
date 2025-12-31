@@ -21,16 +21,24 @@ const AiSummary = () => {
     const [isThinking, setIsThinking] = useState(false);
     const [isExtracting, setIsExtracting] = useState(false);
 
-    const chatEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
 
-    // Auto-scroll to bottom of chat
+    // Auto-scroll to bottom of chat (Prevent whole screen jump)
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        if (messagesContainerRef.current) {
+            const { scrollHeight, clientHeight } = messagesContainerRef.current;
+            messagesContainerRef.current.scrollTo({
+                top: scrollHeight - clientHeight,
+                behavior: 'smooth'
+            });
+        }
+    }, [messages, isThinking]);
 
     const saveApiKey = () => {
-        if (apiKey.trim()) {
-            localStorage.setItem("gemini_api_key", apiKey);
+        const cleanedKey = apiKey.trim();
+        if (cleanedKey) {
+            localStorage.setItem("gemini_api_key", cleanedKey);
+            setApiKey(cleanedKey);
             setShowKeyInput(false);
         }
     };
@@ -103,7 +111,13 @@ const AiSummary = () => {
 
         } catch (err) {
             console.error(err);
-            setMessages(prev => [...prev, { role: 'model', text: "Error: Could not generate response. Check your API Key." }]);
+            const errStr = err.toString();
+            if (errStr.includes("403") || errStr.includes("API key")) {
+                setMessages(prev => [...prev, { role: 'model', text: "Error: Invalid API Key. Please update it." }]);
+                clearApiKey(); // Force re-entry
+            } else {
+                setMessages(prev => [...prev, { role: 'model', text: "Error: Could not generate response. Please try again." }]);
+            }
         } finally {
             setIsThinking(false);
         }
@@ -215,12 +229,15 @@ const AiSummary = () => {
                 </div>
 
                 {/* Messages List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                <div
+                    ref={messagesContainerRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+                >
                     {messages.map((msg, idx) => (
                         <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                                ? 'bg-primary text-white rounded-br-none'
-                                : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-zinc-700'
+                                    ? 'bg-primary text-white rounded-br-none'
+                                    : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-zinc-700'
                                 }`}>
                                 {msg.text}
                             </div>
@@ -233,7 +250,6 @@ const AiSummary = () => {
                             </div>
                         </div>
                     )}
-                    <div ref={chatEndRef} />
                 </div>
 
                 {/* Input Area */}
