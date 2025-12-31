@@ -1,114 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Brain, Download, Play, CheckCircle, AlertTriangle, Trash2, FileText, UploadCloud, X } from 'lucide-react';
-import { CreateMLCEngine } from "@mlc-ai/web-llm";
+import { Sparkles, Brain, Send, Paperclip, FileText, Key, Loader2, Trash2 } from 'lucide-react';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Use local worker from public folder implementation
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-
-// Llama 3.2 1B - Extremely lightweight (approx 800MB)
-const MODEL_ID = "Llama-3.2-1B-Instruct-q4f32_1-MLC";
+// Use CDN worker for maximum compatibility (avoids local path issues)
+// Use CDN worker for maximum compatibility (avoids local path issues)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.530/build/pdf.worker.min.mjs`;
 
 const AiSummary = () => {
-    const [engine, setEngine] = useState(null);
-    const [progress, setProgress] = useState(null); // { text: string, progress: number }
-    const [isLoadingModel, setIsLoadingModel] = useState(false);
+    // State for API Key
+    const [apiKey, setApiKey] = useState(localStorage.getItem("gemini_api_key") || "");
+    const [showKeyInput, setShowKeyInput] = useState(!localStorage.getItem("gemini_api_key"));
 
-    const [inputText, setInputText] = useState("");
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [summary, setSummary] = useState("");
-    const [isExtractingText, setIsExtractingText] = useState(false);
-    const [dragActive, setDragActive] = useState(false);
+    // State for PDF & Chat
+    const [fileContext, setFileContext] = useState(null); // { name: string, content: string }
+    const [messages, setMessages] = useState([
+        { role: 'model', text: "Hello! Upload a PDF or paste text, and I'll answer questions about it." }
+    ]);
+    const [input, setInput] = useState("");
+    const [isThinking, setIsThinking] = useState(false);
+    const [isExtracting, setIsExtracting] = useState(false);
 
-    // Auto-scroll to bottom of summary
-    const summaryRef = useRef(null);
+    const chatEndRef = useRef(null);
 
-    const loadModel = async () => {
-        setIsLoadingModel(true);
-        try {
-            const initProgressCallback = (report) => {
-                console.log("Loading:", report);
-                setProgress(report);
-            };
+    // Auto-scroll to bottom of chat
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
-            const selectedEngine = await CreateMLCEngine(
-                MODEL_ID,
-                { initProgressCallback: initProgressCallback }
-            );
-
-            setEngine(selectedEngine);
-            setIsLoadingModel(false);
-            setProgress(null);
-        } catch (err) {
-            console.error("Failed to load model:", err);
-            // Show the actual error message to the user for better debugging
-            alert(`Failed to load AI model: ${err.message || err}. \n\nEnsure you are using a modern browser (Chrome/Edge) with WebGPU support enabled.`);
-            setIsLoadingModel(false);
+    const saveApiKey = () => {
+        if (apiKey.trim()) {
+            localStorage.setItem("gemini_api_key", apiKey);
+            setShowKeyInput(false);
         }
     };
 
-    const deleteModel = async () => {
-        if (!window.confirm("Are you sure you want to delete the AI model? This will free up storage space, but you'll need to download it again next time.")) {
-            return;
-        }
-
-        try {
-            // WebLLM stores models in the Cache API
-            const cacheKeys = await caches.keys();
-            let deletedCount = 0;
-
-            for (const key of cacheKeys) {
-                // Look for WebLLM related caches
-                if (key.includes("webllm") || key.includes(MODEL_ID)) {
-                    await caches.delete(key);
-                    deletedCount++;
-                }
-            }
-
-            if (deletedCount > 0) {
-                alert("Model successfully deleted from browser cache.");
-                window.location.reload(); // Reload to reset state fully
-            } else {
-                alert("No model files found to delete.");
-            }
-        } catch (err) {
-            console.error("Error deleting model:", err);
-            alert("Failed to delete model: " + err.message);
-        }
+    const clearApiKey = () => {
+        localStorage.removeItem("gemini_api_key");
+        setApiKey("");
+        setShowKeyInput(true);
     };
 
-    const handleDrag = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
-            setDragActive(true);
-        } else if (e.type === "dragleave") {
-            setDragActive(false);
-        }
+    // --- PDF Handling ---
+    const handleFileChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (file) processFile(file);
     };
 
-    const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFile(e.dataTransfer.files[0]);
-        }
-    };
-
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            handleFile(e.target.files[0]);
-        }
-    }
-
-    const handleFile = async (file) => {
+    const processFile = async (file) => {
         if (file.type !== 'application/pdf') {
-            alert("Please upload a PDF file.");
+            alert("Only PDF files are supported.");
             return;
         }
 
-        setIsExtractingText(true);
+        setIsExtracting(true);
         try {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -121,216 +66,209 @@ const AiSummary = () => {
                 fullText += pageText + "\n\n";
             }
 
-            setInputText(fullText);
+            setFileContext({ name: file.name, content: fullText });
+            setMessages(prev => [...prev, { role: 'model', text: `I've read **"${file.name}"**. What would you like to know?` }]);
         } catch (err) {
-            console.error("PDF Parsing Error:", err);
-            alert("Failed to extract text from PDF. " + err.message);
+            console.error(err);
+            alert("Failed to read PDF.");
         } finally {
-            setIsExtractingText(false);
+            setIsExtracting(false);
         }
     };
 
-    const handleSummarize = async () => {
-        if (!engine || !inputText.trim()) return;
+    // --- Chat Logic (Gemini) ---
+    const handleSend = async () => {
+        if (!input.trim() || !apiKey) return;
 
-        setIsGenerating(true);
-        setSummary("");
+        const userMessage = input;
+        setInput(""); // Clear input immediately
+        setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+        setIsThinking(true);
 
         try {
-            const messages = [
-                { role: "system", content: "You are a helpful study assistant. Summarize the following notes concisely. Highlight key concepts with bullet points. keep it short." },
-                { role: "user", content: inputText }
-            ];
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-            const chunks = await engine.chat.completions.create({
-                messages,
-                temperature: 0.5,
-                stream: true, // Enable streaming
-            });
-
-            let fullText = "";
-            for await (const chunk of chunks) {
-                const delta = chunk.choices[0]?.delta.content || "";
-                fullText += delta;
-                setSummary(fullText);
-
-                // Auto scroll
-                if (summaryRef.current) {
-                    summaryRef.current.scrollTop = summaryRef.current.scrollHeight;
-                }
+            // Construct prompt with context
+            let prompt = userMessage;
+            if (fileContext) {
+                prompt = `Context from document "${fileContext.name}":\n${fileContext.content}\n\nQuestion: ${userMessage}`;
             }
 
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+
+            setMessages(prev => [...prev, { role: 'model', text: text }]);
+
         } catch (err) {
-            console.error("Generation failed:", err);
-            alert("Error during summarization.");
+            console.error(err);
+            setMessages(prev => [...prev, { role: 'model', text: "Error: Could not generate response. Check your API Key." }]);
         } finally {
-            setIsGenerating(false);
+            setIsThinking(false);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
+    // --- Legacy Cleanup ---
+    const deleteLegacyCache = async () => {
+        if (!window.confirm("Clean up old AI model files? This will free up ~1GB of space from the previous version.")) return;
+
+        try {
+            const keys = await caches.keys();
+            let count = 0;
+            for (const key of keys) {
+                if (key.includes("webllm") || key.includes("Llama")) {
+                    await caches.delete(key);
+                    count++;
+                }
+            }
+            if (count > 0) alert(`Freed space! Deleted ${count} cache files.`);
+            else alert("No old model files found.");
+        } catch (e) {
+            console.error(e);
+            alert("Error clearing cache.");
         }
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-12">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto h-[calc(100vh-140px)] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                        <Brain className="text-primary" size={32} />
-                        AI Assistant (Lite)
+                    <h1 className="text-3xl font-bold flex items-center gap-3">
+                        <Sparkles className="text-primary" size={32} />
+                        AI Chat Assistant
                     </h1>
-                    <p className="text-muted">
-                        Runs 100% offline using <span className="text-white font-bold">Llama 3.2 (1B)</span>. Fast & Private.
-                    </p>
+                    <p className="text-muted">Chat with your documents using Google Gemini.</p>
                 </div>
 
-                {/* Delete Model Option */}
-                <button
-                    onClick={deleteModel}
-                    className="text-xs text-red-500 hover:text-red-400 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors flex items-center gap-2"
-                >
-                    <Trash2 size={14} /> Delete Model Data
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={deleteLegacyCache} className="text-xs text-red-500 hover:text-red-400 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        <Trash2 size={14} /> Clear Old Data
+                    </button>
+                    {!showKeyInput && (
+                        <button onClick={clearApiKey} className="text-xs text-zinc-500 hover:text-red-400 flex items-center gap-1">
+                            <Key size={12} /> Change Key
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Step 1: Model Loading */}
-            {!engine && (
-                <div className="bg-card border border-zinc-800 rounded-2xl p-8 text-center space-y-6">
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Download size={40} className="text-primary" />
+            {/* API Key Modal (if needed) */}
+            {showKeyInput && (
+                <div className="bg-card border border-red-500/20 p-6 rounded-xl mb-6 shadow-lg shadow-red-900/10">
+                    <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Key size={20} className="text-primary" /> Setup Gemini API
+                    </h2>
+                    <p className="text-zinc-400 text-sm mb-4">
+                        To use this free feature, you need a Gemini API Key.
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline ml-1">
+                            Get one here
+                        </a>.
+                    </p>
+                    <div className="flex gap-2">
+                        <input
+                            type="password"
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            placeholder="Paste AIzaSy..."
+                            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 focus:border-primary focus:outline-none"
+                        />
+                        <button onClick={saveApiKey} className="bg-primary hover:bg-primary-hover px-6 py-2 rounded-lg font-bold text-white">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Main Chat Area */}
+            <div className="flex-1 bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative">
+
+                {/* File Drop Overlay / Context Indicator */}
+                <div className="bg-zinc-900 border-b border-zinc-800 p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {fileContext ? (
+                            <span className="flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
+                                <FileText size={14} />
+                                {fileContext.name}
+                                <button onClick={() => setFileContext(null)} className="hover:text-red-400 ml-1"><X size={12} /></button>
+                            </span>
+                        ) : (
+                            <span className="text-xs text-muted flex items-center gap-2">
+                                <Brain size={14} /> No document loaded. I'll use general knowledge.
+                            </span>
+                        )}
                     </div>
 
-                    <h2 className="text-2xl font-bold text-white">Download AI Model</h2>
-                    <p className="text-zinc-400 max-w-lg mx-auto">
-                        We've switched to a <strong>super lightweight model (~800MB)</strong>.
-                        Download once, use forever offline.
-                    </p>
+                    <label className="cursor-pointer text-xs flex items-center gap-1 hover:text-white text-zinc-400 transition-colors">
+                        <Paperclip size={14} />
+                        {isExtracting ? "Reading..." : "Upload PDF"}
+                        <input type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} disabled={isExtracting} />
+                    </label>
+                </div>
 
-                    {!isLoadingModel ? (
-                        <button
-                            onClick={loadModel}
-                            className="px-8 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-lg shadow-lg shadow-primary/20 transition-all flex items-center gap-2 mx-auto"
-                        >
-                            <Download size={20} /> Load Llama-3.2-1B
-                        </button>
-                    ) : (
-                        <div className="max-w-md mx-auto space-y-3">
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-primary transition-all duration-300"
-                                    style={{ width: `${(progress?.progress || 0) * 100}%` }}
-                                ></div>
+                {/* Messages List */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                    {messages.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
+                                ? 'bg-primary text-white rounded-br-none'
+                                : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-zinc-700'
+                                }`}>
+                                {msg.text}
                             </div>
-                            <p className="text-sm text-primary font-medium animate-pulse">
-                                {progress?.text || "Initializing..."}
-                            </p>
+                        </div>
+                    ))}
+                    {isThinking && (
+                        <div className="flex justify-start">
+                            <div className="bg-zinc-800 border border-zinc-700 rounded-2xl rounded-bl-none px-4 py-3">
+                                <Loader2 className="animate-spin text-zinc-400" size={18} />
+                            </div>
                         </div>
                     )}
-
-                    <div className="flex items-center justify-center gap-2 text-xs text-yellow-500/80 bg-yellow-500/10 py-2 rounded-lg max-w-sm mx-auto">
-                        <AlertTriangle size={14} />
-                        Works best on laptops/desktops. Mobile is experimental.
-                    </div>
+                    <div ref={chatEndRef} />
                 </div>
-            )}
 
-            {/* Step 2: Interaction Area */}
-            {engine && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[600px]">
-                    {/* Input Side */}
-                    <div className="flex flex-col gap-4">
-                        {/* Drag & Drop Zone */}
-                        <div
-                            onDragEnter={handleDrag}
-                            onDragLeave={handleDrag}
-                            onDragOver={handleDrag}
-                            onDrop={handleDrop}
-                            className={`border-2 border-dashed rounded-xl p-4 transition-all text-center cursor-pointer ${dragActive ? 'border-primary bg-primary/10' : 'border-zinc-800 hover:border-zinc-600 bg-zinc-900'
-                                }`}
-                        >
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                onChange={handleFileChange}
-                                className="hidden"
-                                id="pdf-upload"
-                            />
-                            <label htmlFor="pdf-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                                <UploadCloud className={dragActive ? "text-primary" : "text-zinc-500"} size={24} />
-                                <span className="text-sm text-zinc-400 font-medium">
-                                    {isExtractingText
-                                        ? "Extracting text..."
-                                        : "Drop PDF here or click to upload"
-                                    }
-                                </span>
-                            </label>
-                        </div>
-
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex-1 flex flex-col relative">
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="text-sm font-semibold text-zinc-400">Context:</label>
-                                {inputText && (
-                                    <button
-                                        onClick={() => setInputText("")}
-                                        className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
-                                    >
-                                        <X size={12} /> Clear
-                                    </button>
-                                )}
-                            </div>
-                            <textarea
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                placeholder="Paste text or upload a PDF above..."
-                                className="flex-1 bg-transparent resize-none focus:outline-none text-zinc-300 leading-relaxed custom-scrollbar text-sm"
-                            />
-                        </div>
+                {/* Input Area */}
+                <div className="p-4 bg-card border-t border-zinc-800">
+                    <div className="relative">
+                        <textarea
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder={fileContext ? `Ask about "${fileContext.name}"...` : "Ask anything..."}
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-4 pr-12 py-3.5 focus:outline-none focus:border-primary text-sm resize-none custom-scrollbar"
+                            rows="1"
+                            style={{ minHeight: '50px' }}
+                        />
                         <button
-                            onClick={handleSummarize}
-                            disabled={isGenerating || !inputText.trim()}
-                            className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${isGenerating || !inputText.trim()
-                                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                                : 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20'
-                                }`}
+                            onClick={handleSend}
+                            disabled={!input.trim() || isThinking || !apiKey}
+                            className="absolute right-2 top-2 p-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:bg-zinc-700 transition-all"
                         >
-                            {isGenerating ? (
-                                <>
-                                    <Sparkles className="animate-spin" /> Thinking...
-                                </>
-                            ) : (
-                                <>
-                                    <Play fill="currentColor" /> Generate Summary
-                                </>
-                            )}
+                            <Send size={16} />
                         </button>
                     </div>
-
-                    {/* Output Side */}
-                    <div className="bg-card border border-zinc-800 rounded-xl p-6 flex flex-col relative overflow-hidden">
-                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <Sparkles size={18} className="text-blue-400" /> AI Output
-                        </h3>
-
-                        <div ref={summaryRef} className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                            {summary ? (
-                                <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                                    {summary}
-                                </div>
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-50">
-                                    <Brain size={48} className="mb-4" />
-                                    <p>Ready to generate unlimited summaries.</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Status Indicator */}
-                        <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                            MODEL READY
-                        </div>
-                    </div>
+                    {!apiKey && <p className="text-[10px] text-red-400 mt-2 text-center">Please set your API Key above to chat.</p>}
                 </div>
-            )}
+            </div>
         </div>
     );
 };
+
+// Helper for X icon
+const X = ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+);
 
 export default AiSummary;
