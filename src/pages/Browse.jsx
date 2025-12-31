@@ -370,7 +370,7 @@ const Browse = () => {
                                                 </div>
                                                 <h4 className="font-semibold text-white truncate pr-4">{subject.name}</h4>
                                                 <p className="text-xs text-muted">
-                                                    {notesList.filter(n => n.subject_id === subject.id).length} Notes
+                                                    {notesList.filter(n => n.subject_id == subject.id).length} Notes
                                                 </p>
                                             </div>
                                         ))}
