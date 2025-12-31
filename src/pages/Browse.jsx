@@ -267,8 +267,6 @@ const Browse = () => {
                                         <p className="text-sm text-muted mb-3">{note.author}</p>
                                         <div className="flex items-center gap-3 text-xs text-muted">
                                             <span className="bg-zinc-800 px-2 py-1 rounded text-zinc-300">{note.size}</span>
-                                            <span>• {note.time || 'Just now'}</span>
-                                            {/* Show subject name if in search */}
                                             <span className="text-zinc-500">• {subjectList.find(s => s.id === note.subject_id)?.name || 'General'}</span>
                                         </div>
                                     </div>
