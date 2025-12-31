@@ -57,8 +57,12 @@ const Browse = () => {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) console.error('Error fetching notes:', error);
-        else setNotesList(data || []);
+        if (error) {
+            console.error('Error fetching notes:', error);
+        } else {
+            console.log("Fetched Notes:", data); // Debugging
+            setNotesList(data || []);
+        }
     };
 
 
@@ -420,15 +424,18 @@ const Browse = () => {
                                     </div>
 
                                     {/* Notes Grid */}
-                                    {notesList.filter(n => n.subject_id === selectedSubject.id || !n.subject_id).length === 0 ? (
+                                    {notesList.filter(n => n.subject_id == selectedSubject.id || !n.subject_id).length === 0 ? (
                                         <div className="text-center py-12 text-muted">
                                             <FileText size={48} className="mx-auto mb-4 opacity-20" />
                                             <p>No notes uploaded for this subject yet.</p>
-                                            <button onClick={() => setIsUploadModalOpen(true)} className="text-primary hover:underline mt-2">Be the first to upload!</button>
+                                            <p className="text-xs text-zinc-600 mt-2 max-w-xs mx-auto">
+                                                (If you just uploaded one and it's not showing, check your <strong>Supabase RLS Policies</strong> to ensure SELECT is allowed.)
+                                            </p>
+                                            <button onClick={() => setIsUploadModalOpen(true)} className="text-primary hover:underline mt-4">Be the first to upload!</button>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {notesList.filter(n => n.subject_id === selectedSubject.id || !n.subject_id).map((note) => (
+                                            {notesList.filter(n => n.subject_id == selectedSubject.id || !n.subject_id).map((note) => (
                                                 <div key={note.id} className="bg-card border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all group flex items-start gap-4 relative">
                                                     <div className="p-3 bg-zinc-900 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
                                                         <FileText size={24} />
