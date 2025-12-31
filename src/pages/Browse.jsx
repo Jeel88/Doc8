@@ -60,8 +60,7 @@ const Browse = () => {
         if (error) console.error('Error fetching notes:', error);
         else setNotesList(data || []);
     };
-    // ...
-    <span className="text-zinc-500">• {subjectList.find(s => s.id === note.subject_id)?.name || 'General'}</span>
+
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {

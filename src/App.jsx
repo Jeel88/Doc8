@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Layout from './layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 // Pages will be imported here later
@@ -13,6 +14,7 @@ import AiSummary from './pages/AiSummary';
 function App() {
   return (
     <AuthProvider>
+      <SpeedInsights />
       <Router>
         <Routes>
           <Route path="/" element={<Layout />}>
