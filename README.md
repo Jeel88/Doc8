@@ -1,50 +1,43 @@
 # Doc8 - Intelligent Note Sharing & AI Assistant 🎓
 
-Doc8 is a modern, student-centric platform designed to simplify sharing academic resources and learning efficiently. It combines robust file sharing with **AI-powered document interaction**.
+Doc8 is a modern, student-centric platform designed to simplify sharing academic resources and learning efficiently. It combines robust file sharing with **Private, Offline AI interaction**.
 
 ---
 
 ## 🚀 Key Features
 
-*   **Browse by Semester:** Structured navigation for finding notes easily (Year 1–4).
+*   **Browse by Semester:** Structured navigation with visual drill-downs (Year -> Semester -> Subject -> Notes).
 *   **Secure File Upload:** Students can contribute PDFs/Docs, stored securely in **Supabase**.
 *   **Notice Board:** Real-time updates for exams, events, and deadlines.
-*   **AI Chat Assistant:** Interactive chat capable of reading and answering questions from uploaded PDFs in real-time.
+*   **Local AI Chat (WebLLM):** A completely offline, private AI model (`Llama-3.2`) that runs *inside your browser* to answer questions about your PDFs. No API keys required!
+*   **Performance Monitoring:** Integrated **Vercel Speed Insights** for real-time performance tracking.
 
 ---
 
 ## 🛠️ Tech Stack & Architecture
 
-### **Frontend Framework**
-*   **React + Vite:** Chosen for blazing fast performance and hot-module replacement (HMR).
-*   **TailwindCSS:** Utility-first styling for a sleek, responsive "Dark Mode" aesthetic.
-*   **React Router:** Handles seamless client-side navigation between pages.
+### **Frontend & AI**
+*   **React + Vite:** Blazing fast performance and reliable bundling.
+*   **WebLLM:** Runs high-performance Large Language Models directly in the browser using WebGPU.
+*   **PDF.js:** Robust client-side PDF parsing and text extraction.
+*   **TailwindCSS:** Modern, responsive styling with a dark-mode-first aesthetic.
 
-### **Backend & Storage (Serverless)**
-*   **Supabase:** Used as the complete backend solution.
-    *   **Database:** PostgreSQL for storing metadata (notices, file links, user profiles).
-    *   **Auth:** Google Authentication for secure student login.
-    *   **Storage:** Buckets for hosting the actual PDF/Document files.
-
-### **The AI Integration (Google Gemini)**
-We moved from a heavy local model to **Google Gemini API** for speed and performance.
-
-**How "Chat with PDF" Works (The Flow):**
-1.  **Parsing:** When a user uploads a PDF in the AI tab, we use `pdfjs-dist` (running locally in the browser) to read the binary file and extract raw text.
-2.  **Context Injection:** This extracted text is stored in the React state as "Context".
-3.  **Prompt Engineering:** When the user asks a question, we wrap it invisibly:
-    > "Context from document: [PDF TEXT]... User Question: [QUESTION]"
-4.  **Generation:** This combined prompt is sent to `Gemini 1.5 Flash` via the API.
-5.  **Response:** Gemini answers the question *based specifically on the PDF notes provided*.
+### **Backend & Deployment**
+*   **Supabase:** The complete backend solution.
+    *   **PostgreSQL:** Stores metadata and subject hierarchy.
+    *   **RLS Policies:** Ensures secure data access (critical for visibility).
+    *   **Storage Buckets:** Hosts raw note files.
+*   **Vercel:** Deployed with custom `vercel.json` rewrites for seamless client-side routing.
 
 ---
 
-## 📂 Project Structure
+## 🧠 How the AI Works (Privacy First)
+Unlike other apps that send your data to the cloud, **Doc8 runs the AI locally on your device**:
+1.  **Download:** You click "Download Model" once to cache the ~800MB model (Llama 3.2).
+2.  **Parse:** When you upload a PDF, we extract text locally using `pdfjs-dist`.
+3.  **Chat:** The model runs purely in your browser memory. Your documents **never leave your computer**.
 
-- **/src/pages:** Main views (Home, Browse, AiSummary).
-- **/src/components:** Reusable UI (Sidebar, NoticeBoard, FileCard).
-- **/src/context:** Global State (AuthContext for user sessions).
-- **/public:** Static assets and `pdf.worker.min.mjs` (critical for parsing).
+*Note: Large PDFs (>5MB) are automatically truncated to preventing browser memory crashes.*
 
 ---
 
@@ -61,12 +54,23 @@ We moved from a heavy local model to **Google Gemini API** for speed and perform
     VITE_SUPABASE_URL=your_url
     VITE_SUPABASE_ANON_KEY=your_key
     ```
-3.  **Run Locally:**
+3.  **Database Config (Important):**
+    Ensure you have enabled **Row Level Security (RLS)** in Supabase and added a "SELECT" policy to `public.notes`, otherwise notes will be invisible.
+    ```sql
+    create policy "Public Read Access" on "public"."notes" for select using (true);
+    ```
+4.  **Run Locally:**
     ```bash
     npm run dev
     ```
-4.  **AI Setup:**
-    Open the "AI Assistant" tab and paste your free **Google Gemini API Key** when prompted.
+
+---
+
+## 📂 Project Structure
+
+- **/src/pages:** `Browse` (Data Fetching), `AiSummary` (Local LLM Logic).
+- **/src/components:** UI Building blocks.
+- **/public:** Static assets & `pdf.worker.min.mjs` (Critical for AI).
 
 ---
 
