@@ -55,11 +55,13 @@ const Browse = () => {
         const { data, error } = await supabase
             .from('notes')
             .select('*')
-        // .order('created_at', { ascending: false }); 
+            .order('created_at', { ascending: false });
 
         if (error) console.error('Error fetching notes:', error);
         else setNotesList(data || []);
     };
+    // ...
+    <span className="text-zinc-500">• {subjectList.find(s => s.id === note.subject_id)?.name || 'General'}</span>
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -267,7 +269,7 @@ const Browse = () => {
                                             <span className="bg-zinc-800 px-2 py-1 rounded text-zinc-300">{note.size}</span>
                                             <span>• {note.time || 'Just now'}</span>
                                             {/* Show subject name if in search */}
-                                            <span className="text-zinc-500">• {subjectList.find(s => s.id === note.subjectId)?.name || 'General'}</span>
+                                            <span className="text-zinc-500">• {subjectList.find(s => s.id === note.subject_id)?.name || 'General'}</span>
                                         </div>
                                     </div>
                                 </div>
