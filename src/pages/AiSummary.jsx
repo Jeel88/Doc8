@@ -4,8 +4,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Use CDN worker for maximum compatibility (avoids local path issues)
-// Use CDN worker for maximum compatibility (avoids local path issues)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.530/build/pdf.worker.min.mjs`;
+// 100% RELIABLE FIX: Let Vite bundle the worker file
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const AiSummary = () => {
     // State for API Key
@@ -236,8 +238,8 @@ const AiSummary = () => {
                     {messages.map((msg, idx) => (
                         <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                                    ? 'bg-primary text-white rounded-br-none'
-                                    : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-zinc-700'
+                                ? 'bg-primary text-white rounded-br-none'
+                                : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-zinc-700'
                                 }`}>
                                 {msg.text}
                             </div>
